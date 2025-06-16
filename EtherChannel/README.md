@@ -86,4 +86,4 @@ For configurations:
 
 **Note:** On layer 3 switch if there are vlans and inter-vlan routing need to be done,always enable routing using 
 
-*_ip routing_
+* _ip routing_
