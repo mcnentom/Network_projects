@@ -83,3 +83,7 @@ For configurations:
 
 * _switchport trunk allowed vlan 1,10,20,30_
 * _exit_
+
+**Note:** On layer 3 switch if there are vlans and inter-vlan routing need to be done,always enable routing using 
+
+* _ip routing_
