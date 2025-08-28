@@ -126,7 +126,7 @@ Phase2
 
 **note:** Creates a crypto map named MYMAP with sequence number 10 and specifies the type ipsec-isakmp (IKEv1 bind).
 
-**note:**A crypto map is a container that ties together: peer, transform-set(s), ACL (interesting traffic) and optional settings (PFS, NAT traversal, etc.).
+**note:** A crypto map is a container that ties together: peer, transform-set(s), ACL (interesting traffic) and optional settings (PFS, NAT traversal, etc.).
 
 **note:** Sequence number (10) orders entries within that crypto map. Lower numbers are evaluated first. This number is local only peers don't need matching sequence numbers.
 
@@ -136,7 +136,7 @@ Phase2
 
 **note:** Defines the remote peer IP address for this crypto-map entry. This is the public/WAN IP of the other VPN endpoint.
 
-**note:**You can set a DNS name or use dynamic peers (wildcard/dynamic crypto maps) in different configs but set peer <ip> is the most common static case.
+**note:** You can set a DNS name or use dynamic peers (wildcard/dynamic crypto maps) in different configs but set peer <ip> is the most common static case.
 
 **note:** If the peer has a dynamic IP (e.g., remote dial-in client), you use a different crypto map setup (e.g., crypto map ... set peer identity or a dynamic crypto map entry). For two site-to-site routers, static peer IP is typical.
 
