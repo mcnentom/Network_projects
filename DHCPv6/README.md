@@ -1,89 +1,117 @@
-# EtherChannels
+# DHCPv6
 
-This a load balancing technique that aggregates multiple links between intermediary devices into bundles enabling a network to have redundancy, loop prevention and increased bandwidth.
+DHCPv6 is the IPv6 version of DHCP (like we use in IPv4 to give out IPs automatically).
 
-In this setup the intermediary devices is configured to view the multiple bundles connected to it as one logical interface.
+It allows hosts to dynamically obtain IPv6 addresses and other parameters (DNS, domain name, etc.).
 
-Occassionally, STP will tend to block the multiple physical links and use only one physical link in packet transmission.
+Works together with IPv6 autoconfiguration (SLAAC).
 
-If one physical link such as fa0/1 can transmit 100mbps, using two of this links will transmit 200mbps,the speed increases as you ncrease number of physical interface.
+## Two Main Modes of IPv6 Address Assignment
 
-To overcome the issue with STP,etherchannel is configured.
+### Stateless
 
-One advantage of etherChannel is even if one of the physical link goes down the other links in the same channel group will still transmit data packets.
+The router (via RA – Router Advertisement) tells the host the prefix.
 
-To configure etherchannel two protocols are used:
+The host generates its own IPv6 address (EUI-64 or random).
 
-## PAGB
+DHCPv6 is used only for extra info (DNS, NTP, domain name).
 
-This is the Port Aggregation Protocol.
+Router advertises: Other-config-flag = 1.
 
-It is specific to cisco devices.
+### Stateful
 
-For configuration for instance using two switch S1 and S2 the following modes will work:
- 
+Works just like DHCPv4.
 
-|  S1        |    S2           |Negotiation   | Channel      |
-|:----------:|:---------------:|:------------:|:------------:|
-|  On        |    On           |  NO          | Forms        |
-|  On        | Auto/Desirable  |  NO          | Doesn't form |
-|  Auto      |    Auto         |  NO          | Doesn't form |
-|  Auto      |   Desirable     |   YES        | Forms        |
-|  Desirable |  Desirable      |   YES        | Forms        | 
-| Desirable  |   Auto          |   YES        | Forms        |
+The DHCPv6 server provides the full IPv6 address and info.
 
-## LACP
+Router advertises: Managed-config-flag = 1.
 
-This Link Aggregation Control Protocol
+## DHCPv6 Configuration on Cisco Router
 
-Works with both Cisco devices and other vendor devices.
+### SLAAC (Stateless Address Autoconfiguration)
 
-For configurations:
-|  S1        |    S2           |Negotiation   | Channel      |
-|:----------:|:---------------:|:------------:|:------------:|
-|  On        |    On           |  NO          | Forms        |
-|  On        | Passsive/Active |   No         | Doesn't Forms|
-|  Active    | Active/passive  |  YES         | forms        |
-|  Passive   |   Passsive      |   No         | Doesn't Forms|
-|  Passive   |   Active        |   Yes        |  Forms       |
+Host generates its IPv6 address from the router’s RA (Router Advertisement) prefix.
 
-## PAgB Commands
+No DHCPv6 server needed.
 
-* _int range fa0/1-4_    
-**Note:** This are the physical interfaces connected to the device and which are to be grouped into one group
-* _channel-group 1 mode desirable_
-* _exit_
+Router only advertises the prefix.
 
-**Note:** If this the configuration on one intermediary device say S1,then for the other device say S2 the _mode_ can be either _auto_ or _desirable_ for successful channel formation.
+Host derives full address (using MAC/EUI-64 or random).
 
-**Note:**the identifier is 1,for easier negotiation and avoiding confusion when troubleshooting it is advised that the identifier for the interfaces on S1 and S2 needed to form one group be identical.
+Router Config
 
-* _int port-channel 1_
-* _switchport mode trunk_
+* _R1(config)# ipv6 unicast-routing_
 
-**Note:** if you are using VLANS add  this to allow vlan trunking between the devices.
+* _R1(config)# interface g0/0_
+* _R1(config-if)# ipv6 address 2001:db8:1::1/64_
+* _R1(config-if)# ipv6 enable_
 
-* _switchport trunk allowed vlan 1,10,20,30_
-* _exit_
+! By Default = SLAAC only (M=0, O=0 in RA)
 
-**Note:** the vlans on one devices should be familiar to the other devices.For instance if S1 has vlan 10,20,30 then S2 hould be familiar with this vlans.
+PC Config
 
-## LACP Commands
+* _PC1(config)# interface g0/0_
+* _PC1(config-if)# ipv6 address autoconfig_
 
-* _int range fa0/1-4_    
-* _channel-group 1 mode active_
-* _exit_
+### Stateless DHCPv6
 
-**Note:** If this the configuration on one intermediary device say S1,then for the other device say S2 the _mode_ can be either _active_ or _passive_ for successful channel formation.
+Router gives the prefix via RA (like SLAAC).
 
-* _int port-channel 1_
-* _switchport mode trunk_
+Hosts generate their own addresses but use DHCPv6 for extra info (DNS, domain).
 
-**Note:** if you are using VLANS add  this to allow vlan trunking between the devices.
+Router sets the Other-config flag = 1.
 
-* _switchport trunk allowed vlan 1,10,20,30_
-* _exit_
+Router Config
 
-**Note:** On layer 3 switch if there are vlans and inter-vlan routing need to be done,always enable routing using 
+* _R1(config)# ipv6 unicast-routing_
 
-* _ip routing_
+ Interface config
+
+* _R1(config)# interface g0/0_
+* _R1(config-if)# ipv6 address 2001:db8:1::1/64_
+* _R1(config-if)# ipv6 enable_
+* _R1(config-if)# ipv6 nd other-config-flag_   ! tells hosts to use DHCPv6
+
+ DHCPv6 Pool
+
+* _R1(config)# ipv6 dhcp pool Ip-POOL_
+* _R1(config-dhcpv6)# dns-server 2001:db8::53_
+* _R1(config-dhcpv6)# domain-name stateless.local_
+
+ Bind pool to interface
+
+* _R1(config)# interface g0/0_
+* _R1(config-if)# ipv6 dhcp server Ip-POOL_
+
+ PC Config
+* _PC1(config)# interface g0/0_
+* _PC1(config-if)# ipv6 address autoconfig_
+
+Step 1: Enable IPv6 routing
+
+* _R1(config)# ipv6 unicast-routing_
+
+Step 2: Configure the interface toward LAN
+
+* _R1(config)# interface g0/0_
+* _R1(config-if)# ipv6 address 2001:db8:1::1/64_
+* _R1(config-if)# ipv6 enable_
+* _R1(config-if)# ipv6 nd managed-config-flag _  ! tells hosts to use DHCPv6 stateful
+
+Step 3: Create a DHCPv6 pool
+
+* _R1(config)# ipv6 dhcp pool DHCPv6-LAN_
+* _R1(config-dhcpv6)# address prefix 2001:db8:1::/64_  ! prefix given to clients
+* _R1(config-dhcpv6)# dns-server 2001:db8::53_          ! optional DNS server
+* _R1(config-dhcpv6)# domain-name mynet.local_
+
+Step 4: Bind DHCPv6 pool to the interface
+
+* _R1(config)# interface g0/0_
+* _R1(config-if)# ipv6 dhcp server DHCPv6-LAN_
+
+DHCPv6 Client Configuration
+
+* _PC1(config)# interface g0/0_
+* _PC1(config-if)# ipv6 address dhcp_
+

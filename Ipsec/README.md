@@ -18,7 +18,7 @@ At the other end, the packet is decrypted and the original IP packet is delivere
 
 IPsec tunneling occurs in two main/negotiation phases that is:
 
-### Phase 1:Establishing the IKE Security Association (IKE SA)
+### Phase 1:Establishing the IKE(Internet Key Exchange) Security Association (IKE SA)
 
 Builds a secure, authenticated channel for negotiating further security.
 
@@ -74,6 +74,7 @@ Here only Quick Mode exists in Phase 2 (3 messages).
 * _license boot module c2900 technology-package securityk9_ 
 
  **note:** Enables the vpn package,always reload for effect
+ 
 * _access-list 101 permit ip source net id subnet mask dest net id_
 
 Phase1
